@@ -830,10 +830,17 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
         if (duration == mScreenTimeoutDuration) {
             return;
         }
-        // stick with default timeout if we are using the proximity sensor
-        if (proximitySensorModeEnabled()) {
-            return;
+
+        if(SystemProperties.getInt("proximity.incall.ignore", 0) == 0)
+        {
+            // stick with default timeout if we are using the proximity sensor
+            if (proximitySensorModeEnabled()) {
+                return;
+            }
         }
+        else
+            if(DBG) Log.d(LOG_TAG, "Ignore proximity sensor when determining 'In Call' Screen timeout.");
+
         mScreenTimeoutDuration = duration;
         updatePokeLock();
     }
