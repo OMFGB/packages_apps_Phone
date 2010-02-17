@@ -1917,18 +1917,8 @@ public class InCallScreen extends Activity
 
         if (bailOutImmediately) {
             if (VDBG) log("- onDisconnect: bailOutImmediately...");
-
-            // Exit the in-call UI!
-            // (This is basically the same "delayed cleanup" we do below,
-            // just with zero delay.  Since the Phone is currently idle,
-            // this call is guaranteed to immediately finish this activity.)
-            delayedCleanupAfterDisconnect();
-
-            // Also, if this was a failed emergency call, we may need to
-            // (re)launch the EmergencyCallHandler in order to retry the
-            // call.
-            // (Note that emergencyCallRetryCount will be -1 if we weren't
-            // launched via the EmergencyCallHandler in the first place.)
+            // Retry the call, by resending the intent to the emergency
+            // call handler activity.
             if ((cause == Connection.DisconnectCause.OUT_OF_SERVICE)
                     && (emergencyCallRetryCount > 0)) {
                 Log.i(LOG_TAG, "onDisconnect: OUT_OF_SERVICE; need to retry emergency call!");
@@ -1960,6 +1950,11 @@ public class InCallScreen extends Activity
                 // to not even try launching the call log if we know we're
                 // about to launch the EmergencyCallHandler instead.
             }
+            // Exit the in-call UI!
+            // (This is basically the same "delayed cleanup" we do below,
+            // just with zero delay.  Since the Phone is currently idle,
+            // this call is guaranteed to immediately finish this activity.)
+            delayedCleanupAfterDisconnect();
         } else {
             if (VDBG) log("- onDisconnect: delayed bailout...");
             // Stay on the in-call screen for now.  (Either the phone is
@@ -2654,8 +2649,7 @@ public class InCallScreen extends Activity
             // expecting a callback when the emergency call handler dictates
             // it) and just return the success state.
             if (isEmergencyNumber && (okToCallStatus == InCallInitStatus.POWER_OFF)) {
-                Log.i(LOG_TAG, "placeCall: Trying to make emergency call while POWER_OFF!");
-                Log.i(LOG_TAG, "- starting EmergencyCallHandler, finishing InCallScreen...");
+                if(DBG) log("EmergencyCall Intent: " + intent);
                 startActivity(intent.setClassName(this, EmergencyCallHandler.class.getName()));
                 endInCallScreenSession();
                 return InCallInitStatus.SUCCESS;
