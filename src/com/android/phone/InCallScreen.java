@@ -1921,34 +1921,8 @@ public class InCallScreen extends Activity
             // call handler activity.
             if ((cause == Connection.DisconnectCause.OUT_OF_SERVICE)
                     && (emergencyCallRetryCount > 0)) {
-                Log.i(LOG_TAG, "onDisconnect: OUT_OF_SERVICE; need to retry emergency call!");
-                Log.i(LOG_TAG, "- emergencyCallRetryCount = " + emergencyCallRetryCount);
-
-                // Fire off the EmergencyCallHandler, and pass it the
-                // original CALL_EMERGENCY intent that got us here.  (The
-                // EmergencyCallHandler will re-try turning the radio on,
-                // and then pass this intent back to us.)
-
-                // Watch out: we use originalInCallIntent here rather than
-                // the current value of getIntent(), since the current intent
-                // just got reset by the delayedCleanupAfterDisconnect() call
-                // immediately above!
-
-                Intent i = originalInCallIntent.setClassName(this,
-                        EmergencyCallHandler.class.getName());
-                Log.i(LOG_TAG, "- launching: " + i);
-                startActivity(i);
-
-                // TODO: the sequence of startActivity() calls is a little
-                // ugly here.  We just launched the EmergencyCallHandler (see
-                // the code immediately above here), but right before doing
-                // that we *also* called delayedCleanupAfterDisconnect() which
-                // itself calls startActivity() in order to launch the call
-                // log.  Issuing two startActivity() calls in a row like this
-                // makes no sense; in practice the 2nd call wins, but it would
-                // be cleaner for us to force delayedCleanupAfterDisconnect()
-                // to not even try launching the call log if we know we're
-                // about to launch the EmergencyCallHandler instead.
+                startActivity(((Intent)getIntent().clone())
+                        .setClassName(this, EmergencyCallHandler.class.getName()));
             }
             // Exit the in-call UI!
             // (This is basically the same "delayed cleanup" we do below,
@@ -2650,7 +2624,9 @@ public class InCallScreen extends Activity
             // it) and just return the success state.
             if (isEmergencyNumber && (okToCallStatus == InCallInitStatus.POWER_OFF)) {
                 if(DBG) log("EmergencyCall Intent: " + intent);
-                startActivity(intent.setClassName(this, EmergencyCallHandler.class.getName()));
+                startActivity(((Intent)intent.clone())
+                        .setClassName(this, EmergencyCallHandler.class.getName()));
+                if (DBG) log("placeCall: starting EmergencyCallHandler, finishing InCallScreen...");
                 endInCallScreenSession();
                 return InCallInitStatus.SUCCESS;
             } else {
