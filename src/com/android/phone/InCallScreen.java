@@ -1338,10 +1338,11 @@ public class InCallScreen extends Activity
                 super.onBackPressed();
                 return;
             } else {
-                // The BACK key is disabled; don't reject the call, but
-                // *do* consume the keypress (otherwise we'll exit out of
-                // this activity.)
+                // Releasing an incoming call on BACK press is disabled,
+                // Don't reject the call.
+                // Exit out of this activity.
                 if (DBG) log("BACK key while ringing: ignored");
+                super.onBackPressed();
                 return;
             }
         }
