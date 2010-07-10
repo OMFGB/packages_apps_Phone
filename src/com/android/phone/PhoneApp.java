@@ -226,6 +226,7 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
     private boolean mTtyEnabled;
     // Current TTY operating mode selected by user
     private int mPreferredTtyMode = Phone.TTY_MODE_OFF;
+    private boolean mTtySetOnPowerUp = false;
     private int mPhoneType;
 
     /**
@@ -575,7 +576,6 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
                     phone.getContext().getContentResolver(),
                     android.provider.Settings.Secure.PREFERRED_TTY_MODE,
                     Phone.TTY_MODE_OFF);
-            mHandler.sendMessage(mHandler.obtainMessage(EVENT_TTY_PREFERRED_MODE_CHANGED, 0));
         }
         // Read HAC settings and configure audio hardware
         if (getResources().getBoolean(R.bool.hac_enabled)) {
@@ -1571,12 +1571,8 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
     }
 
     private void handleServiceStateChanged(Intent intent) {
-        /**
-         * This used to handle updating EriTextWidgetProvider this routine
-         * and and listening for ACTION_SERVICE_STATE_CHANGED intents could
-         * be removed. But leaving just in case it might be needed in the near
-         * future.
-         */
+
+        // This function used to handle updating EriTextWidgetProvider
 
         // If service just returned, start sending out the queued messages
         ServiceState ss = ServiceState.newFromBundle(intent.getExtras());
@@ -1584,9 +1580,10 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
         boolean hasService = true;
         boolean isCdma = false;
         String eriText = "";
+        int state = ServiceState.STATE_POWER_OFF;
 
         if (ss != null) {
-            int state = ss.getState();
+            state = ss.getState();
             NotificationMgr.getDefault().updateNetworkSelection(state);
             switch (state) {
                 case ServiceState.STATE_OUT_OF_SERVICE:
@@ -1596,6 +1593,25 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
             }
         } else {
             hasService = false;
+        }
+
+        if ((state != ServiceState.STATE_POWER_OFF)
+                    && mTtyEnabled && !mTtySetOnPowerUp) {
+                /*
+                 * Force TTY update once after modem is on. This will send TTY
+                 * request to RIL. RIL will send configure request to CTT modem to do
+                 * CTM encoding/decoding - Ref:TS 26.226. UI will show TTY icon only
+                 * after RIL configures modem successfully.
+                 */
+                mHandler.sendMessage(mHandler.obtainMessage(EVENT_TTY_PREFERRED_MODE_CHANGED, 0));
+                mTtySetOnPowerUp = true;
+            }
+        if (state == ServiceState.STATE_POWER_OFF) {
+            /*
+             * Disable this flag so that TTY set will be send to RIL again after
+             * modem is available
+             */
+             mTtySetOnPowerUp = false;
         }
     }
 
@@ -1667,25 +1683,6 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
             Intent ttyModeChanged = new Intent(TtyIntent.TTY_ENABLED_CHANGE_ACTION);
             ttyModeChanged.putExtra("ttyEnabled", ttymode != Phone.TTY_MODE_OFF);
             sendBroadcast(ttyModeChanged);
-
-            String audioTtyMode;
-            switch (ttymode) {
-            case Phone.TTY_MODE_FULL:
-                audioTtyMode = "tty_full";
-                break;
-            case Phone.TTY_MODE_VCO:
-                audioTtyMode = "tty_vco";
-                break;
-            case Phone.TTY_MODE_HCO:
-                audioTtyMode = "tty_hco";
-                break;
-            case Phone.TTY_MODE_OFF:
-            default:
-                audioTtyMode = "tty_off";
-                break;
-            }
-            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            audioManager.setParameters("tty_mode="+audioTtyMode);
         }
     }
 
