@@ -317,7 +317,7 @@ public class Settings extends PreferenceActivity implements DialogInterface.OnCl
                 //{PIAF
                 Intent intent = new Intent(PhoneToggler.NETWORK_MODE_CHANGED);
                 intent.putExtra(PhoneToggler.NETWORK_MODE, buttonNetworkMode);
-                mPhone.getContext().sendBroadcast(intent);                
+                mPhone.getContext().sendBroadcast(intent, PhoneToggler.CHANGE_NETWORK_MODE_PERM);                
                 //PIAF}
                 
             }
@@ -410,7 +410,7 @@ public class Settings extends PreferenceActivity implements DialogInterface.OnCl
                     //{PIAF
                     Intent intent = new Intent(PhoneToggler.NETWORK_MODE_CHANGED);
                     intent.putExtra(PhoneToggler.NETWORK_MODE, modemNetworkMode);
-                    mPhone.getContext().sendBroadcast(intent);                
+                    mPhone.getContext().sendBroadcast(intent, PhoneToggler.CHANGE_NETWORK_MODE_PERM);                
                     //PIAF}
                     
                 } else {
@@ -432,7 +432,7 @@ public class Settings extends PreferenceActivity implements DialogInterface.OnCl
                 //{PIAF
                 Intent intent = new Intent(PhoneToggler.NETWORK_MODE_CHANGED);
                 intent.putExtra(PhoneToggler.NETWORK_MODE, networkMode);
-                mPhone.getContext().sendBroadcast(intent);                
+                mPhone.getContext().sendBroadcast(intent, PhoneToggler.CHANGE_NETWORK_MODE_PERM);                
                 //PIAF}
                 
             } else {
