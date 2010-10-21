@@ -541,6 +541,10 @@ public class CellBroadcastSms extends PreferenceActivity
             case MESSAGE_GET_CB_SMS_CONFIG:
                 int result[] = (int[])((AsyncResult)msg.obj).result;
 
+                if (((AsyncResult)msg.obj).exception != null) {
+                    return;
+                }
+
                 // check if the actual service categoties table size on the NV is '0'
                 if (result[0] == 0) {
                     result[0] = NO_OF_SERVICE_CATEGORIES;
