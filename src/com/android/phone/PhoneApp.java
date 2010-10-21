@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (c) 2010, Code Aurora Forum. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1451,14 +1452,27 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
             } else if (action.equals(Intent.ACTION_BATTERY_LOW)) {
                 if (VDBG) Log.d(LOG_TAG, "mReceiver: ACTION_BATTERY_LOW");
                 notifier.sendBatteryLow();  // Play a warning tone if in-call
-            } else if ((action.equals(TelephonyIntents.ACTION_SIM_STATE_CHANGED)) &&
-                    (mPUKEntryActivity != null)) {
-                // if an attempt to un-PUK-lock the device was made, while we're
-                // receiving this state change notification, notify the handler.
-                // NOTE: This is ONLY triggered if an attempt to un-PUK-lock has
-                // been attempted.
-                mHandler.sendMessage(mHandler.obtainMessage(EVENT_SIM_STATE_CHANGED,
-                        intent.getStringExtra(IccCard.INTENT_KEY_ICC_STATE)));
+            } else if ((action.equals(TelephonyIntents.ACTION_SIM_STATE_CHANGED))) {
+                if (mPUKEntryActivity != null) {
+                    // if an attempt to un-PUK-lock the device was made, while we're
+                    // receiving this state change notification, notify the handler.
+                    // NOTE: This is ONLY triggered if an attempt to un-PUK-lock has
+                    // been attempted.
+                    mHandler.sendMessage(mHandler.obtainMessage(EVENT_SIM_STATE_CHANGED,
+                            intent.getStringExtra(IccCard.INTENT_KEY_ICC_STATE)));
+                }
+
+                String iccState = intent.getStringExtra(IccCard.INTENT_KEY_ICC_STATE);
+                String reason = intent.getStringExtra(IccCard.INTENT_KEY_LOCKED_REASON);
+                if ((reason != null) && (IccCard.INTENT_VALUE_ICC_LOCKED.equals(iccState))) {
+                    if (getResources().getBoolean(R.bool.ignore_perso_locked_events)) {
+                        // Some products don't have the concept of a perso lock.
+                        Log.i(LOG_TAG, "Ignoring ICC Perso Locked event "
+                              + "not showing Depersonalization screen for PIN entry");
+                    } else {
+                       showDepersonalizationScreen(reason);
+                    }
+                }
             } else if (action.equals(TelephonyIntents.ACTION_RADIO_TECHNOLOGY_CHANGED)) {
                 String newPhone = intent.getStringExtra(Phone.PHONE_NAME_KEY);
                 Log.d(LOG_TAG, "Radio technology switched. Now " + newPhone + " is active.");
@@ -1676,6 +1690,55 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
                     10*1000 /* 10 sec */);
         } catch (RemoteException ex) {
             // System process is dead.
+        }
+    }
+
+    private void showDepersonalizationScreen(String reason) {
+        int subtype = IccDepersonalizationConstants.ICC_SIM_NETWORK;
+
+        if(IccCard.INTENT_VALUE_LOCKED_NETWORK.equals(reason)) {
+           //Network Depersonalization is presently handled
+           //using dedicated Notification.
+           Log.i(LOG_TAG,"Ignoring SIM NETWORK Depersonalization "
+                 + "since this is handled differently");
+        } else if(IccCard.INTENT_VALUE_LOCKED_NETWORK_SUBSET.equals(reason)) {
+           Log.i(LOG_TAG,"SIM NETWORK SUBSET Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_SIM_NETWORK_SUBSET;
+        } else if(IccCard.INTENT_VALUE_LOCKED_CORPORATE.equals(reason)) {
+           Log.i(LOG_TAG,"SIM CORPORATE Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_SIM_CORPORATE;
+        } else if(IccCard.INTENT_VALUE_LOCKED_SERVICE_PROVIDER.equals(reason)) {
+           Log.i(LOG_TAG,"SIM SERVICE PROVIDER Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_SIM_SERVICE_PROVIDER;
+        } else if(IccCard.INTENT_VALUE_LOCKED_SIM.equals(reason)) {
+           Log.i(LOG_TAG,"SIM SIM Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_SIM_SIM;
+        } else if(IccCard.INTENT_VALUE_LOCKED_RUIM_NETWORK1.equals(reason)) {
+           Log.i(LOG_TAG,"RUIM NETWORK1 Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_RUIM_NETWORK1;
+        } else if(IccCard.INTENT_VALUE_LOCKED_RUIM_NETWORK2.equals(reason)) {
+           Log.i(LOG_TAG,"RUIM NETWORK2 Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_RUIM_NETWORK2;
+        } else if(IccCard.INTENT_VALUE_LOCKED_RUIM_HRPD.equals(reason)) {
+           Log.i(LOG_TAG,"RUIM HRPD Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_RUIM_HRPD;
+        } else if(IccCard.INTENT_VALUE_LOCKED_RUIM_CORPORATE.equals(reason)) {
+           Log.i(LOG_TAG,"RUIM CORPORATE Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_RUIM_CORPORATE;
+        } else if(IccCard.INTENT_VALUE_LOCKED_RUIM_SERVICE_PROVIDER.equals(reason)) {
+           Log.i(LOG_TAG,"RUIM SERVICE PROVIDER Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_RUIM_SERVICE_PROVIDER;
+        } else if(IccCard.INTENT_VALUE_LOCKED_RUIM_RUIM.equals(reason)) {
+           Log.i(LOG_TAG,"RUIM RUIM Depersonalization");
+           subtype = IccDepersonalizationConstants.ICC_RUIM_RUIM;
+        } else {
+           Log.e(LOG_TAG,"Unsupported Depersonalization: reason = " + reason);
+        }
+
+        if (subtype != IccDepersonalizationConstants.ICC_SIM_NETWORK) {
+            IccDepersonalizationPanel dpPanel =
+                 new IccDepersonalizationPanel(PhoneApp.getInstance(),subtype);
+            dpPanel.show();
         }
     }
 }
