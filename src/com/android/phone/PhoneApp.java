@@ -1273,9 +1273,9 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
                 cdmaOtaInCallScreenUiState = new OtaUtils.CdmaOtaInCallScreenUiState();
             }
         } else {
-            //Clean up OTA data in GSM/UMTS. It is valid only for CDMA
             clearOtaState();
         }
+	clearInCallScreenMode();
 
         ringer.updateRingerContextAfterRadioTechnologyChange(this.phone);
         notifier.updateCallNotifierRegistrationsAfterRadioTechnologyChange();
