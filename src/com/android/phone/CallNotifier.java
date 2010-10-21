@@ -210,6 +210,7 @@ public class CallNotifier extends Handler
 
     @Override
     public void handleMessage(Message msg) {
+        mApplication.checkPhoneType();
         switch (msg.what) {
             case PHONE_NEW_RINGING_CONNECTION:
                 if (DBG) log("RINGING... (new)");
