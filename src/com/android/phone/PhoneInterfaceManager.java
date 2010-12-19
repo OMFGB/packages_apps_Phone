@@ -803,4 +803,33 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
     public boolean hasIccCard() {
         return mPhone.getIccCard().hasIccCard();
     }
+
+    /**
+     * {@hide}
+     * Returns Interface name
+     */
+    public String getActiveInterfaceName(String apnType) {
+        return mPhone.getInterfaceName(apnType);
+    }
+
+
+    /**
+     * {@hide}
+     * Returns Ip address
+     */
+    public String getActiveIpAddress(String apnType) {
+        return mPhone.getIpAddress(apnType);
+    }
+
+    /**
+     * {@hide}
+     * Returns Gateway address
+     */
+    public String getActiveGateway(String apnType) {
+        return mPhone.getGateway(apnType);
+    }
+
+
+
+
 }
