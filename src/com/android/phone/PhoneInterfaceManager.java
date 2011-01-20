@@ -531,6 +531,11 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         return true;
     }
 
+    public void setRilPowerOff() {
+        enforceModifyPermission();
+        mPhone.setRilPowerOff();
+    }
+
     public boolean enableDataConnectivity() {
         enforceModifyPermission();
         return mPhone.enableDataConnectivity();
