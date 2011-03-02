@@ -26,6 +26,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
 import android.view.WindowManager;
 import android.widget.Toast;
+import android.util.Log;
 
 import com.android.internal.telephony.CommandException;
 import com.android.internal.telephony.Phone;
@@ -38,6 +39,7 @@ import com.android.internal.telephony.PhoneFactory;
 public class FdnSetting extends PreferenceActivity
         implements EditPinPreference.OnPinEnteredListener, DialogInterface.OnCancelListener {
 
+    private static final String LOG_TAG = "FdnSetting";
     private Phone mPhone;
 
     /**
@@ -245,7 +247,14 @@ public class FdnSetting extends PreferenceActivity
                             } else {
                                 // set the correct error message depending upon the state.
                                 if (mPinChangeState == PIN_CHANGE_PUK) {
-                                    displayMessage(R.string.badPuk2);
+                                    if (mPhone.getIccCard().getIccPuk2Blocked()) {
+                                        Log.d(LOG_TAG,"PUK2 Blocked while changing PIN2.Options 'Enable FDN' & 'Change PIN2' disabled");
+                                        displayMessage(R.string.puk2_blocked);
+                                        mButtonEnableFDN.setEnabled(false);
+                                        mButtonChangePin2.setEnabled(false);
+                                    } else {
+                                        displayMessage(R.string.badPuk2);
+                                    }
                                 } else {
                                     displayMessage(R.string.badPin2);
                                 }
@@ -258,8 +267,12 @@ public class FdnSetting extends PreferenceActivity
                                 }
                             }
                         } else {
+                            if (mPinChangeState == PIN_CHANGE_PUK) {
+                                displayMessage(R.string.pin2_unblocked);
+                            } else {
+                                displayMessage(R.string.pin2_changed);
+                            }
                             // reset to normal behaviour on successful change.
-                            displayMessage(R.string.pin2_changed);
                             mSkipOldPin = false;
                             resetPinChangeState();
                         }
@@ -275,6 +288,7 @@ public class FdnSetting extends PreferenceActivity
     public void onCancel(DialogInterface dialog) {
         // set the state of the preference and then display the dialog.
         mPinChangeState = PIN_CHANGE_PUK;
+        mSkipOldPin = true;
         displayPinChangeDialog(0, true);
     }
 
@@ -282,8 +296,14 @@ public class FdnSetting extends PreferenceActivity
      * Display a toast for message, like the rest of the settings.
      */
     private final void displayMessage(int strId) {
-        Toast.makeText(this, getString(strId), Toast.LENGTH_SHORT)
-            .show();
+        String msg = getString(strId);
+        if ((strId == R.string.badPin2) || (strId == R.string.badPuk2) || (strId == R.string.pin2_invalid)) {
+            int attemptsRemaining = mPhone.getIccCard().getIccPin2RetryCount();
+            if (attemptsRemaining >= 0) {
+                msg = getString(strId) + getString(R.string.pin2_attempts) + attemptsRemaining;
+            }
+        }
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -367,14 +387,23 @@ public class FdnSetting extends PreferenceActivity
      * Reflect the updated FDN state in the UI.
      */
     private void updateEnableFDN() {
-        if (mPhone.getIccCard().getIccFdnEnabled()) {
-            mButtonEnableFDN.setTitle(R.string.enable_fdn_ok);
-            mButtonEnableFDN.setSummary(R.string.fdn_enabled);
-            mButtonEnableFDN.setDialogTitle(R.string.disable_fdn);
+        if (mPhone.getIccCard().getIccFdnAvailable()) {
+            if (mPhone.getIccCard().getIccFdnEnabled()) {
+                mButtonEnableFDN.setTitle(R.string.enable_fdn_ok);
+                mButtonEnableFDN.setSummary(R.string.fdn_enabled);
+                mButtonEnableFDN.setDialogTitle(R.string.disable_fdn);
+            } else {
+                mButtonEnableFDN.setTitle(R.string.disable_fdn_ok);
+                mButtonEnableFDN.setSummary(R.string.fdn_disabled);
+                mButtonEnableFDN.setDialogTitle(R.string.enable_fdn);
+            }
         } else {
-            mButtonEnableFDN.setTitle(R.string.disable_fdn_ok);
-            mButtonEnableFDN.setSummary(R.string.fdn_disabled);
-            mButtonEnableFDN.setDialogTitle(R.string.enable_fdn);
+            // Disable FDN Settings since FDN service is unavailable.
+            mButtonEnableFDN.setEnabled(false);
+            mButtonChangePin2.setEnabled(false);
+            mButtonEnableFDN.setSummary(R.string.fdn_unavailable);
+            mButtonChangePin2.setSummary(R.string.fdn_unavailable);
+            displayMessage(R.string.fdn_unavailable);
         }
     }
 
@@ -415,6 +444,7 @@ public class FdnSetting extends PreferenceActivity
         super.onResume();
         mPhone = PhoneFactory.getDefaultPhone();
         updateEnableFDN();
+        checkPin2StatusAndUpdateFdnScreen();
     }
 
     /**
@@ -429,6 +459,21 @@ public class FdnSetting extends PreferenceActivity
         out.putString(NEW_PIN_KEY, mNewPin);
         out.putString(DIALOG_MESSAGE_KEY, mButtonChangePin2.getDialogMessage().toString());
         out.putString(DIALOG_PIN_ENTRY_KEY, mButtonChangePin2.getText());
+    }
+
+    private void checkPin2StatusAndUpdateFdnScreen() {
+        if (mPhone.getIccCard().getIccPuk2Blocked()) {
+            Log.d(LOG_TAG,"PUK2 is Blocked.Disabling Enable FDN,Change PIN2");
+            displayMessage(R.string.puk2_blocked);
+            mButtonEnableFDN.setEnabled(false);
+            mButtonChangePin2.setEnabled(false);
+        } else if (mPhone.getIccCard().getIccPin2Blocked()) {
+            Log.d(LOG_TAG,"PIN2 is Blocked");
+            resetPinChangeStateForPUK2();
+        } else {
+            Log.d(LOG_TAG,"PUK2/PIN2 is not Blocked");
+            resetPinChangeState();
+        }
     }
 }
 
