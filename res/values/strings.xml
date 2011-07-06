@@ -504,16 +504,14 @@
     <string name="preferred_network_mode_summary">Change the network operating mode</string>
     <string name="preferred_network_mode_dialogtitle">Preferred network mode</string>
     <string-array name="preferred_network_mode_choices">
-	<item>Global</item><!--CDMA/EvDo/GSM/WCDMA auto-->
-        <item>LTE only</item>
-        <item>CDMA + LTE/EvDo auto</item>
         <item>CDMA / EvDo auto</item>
+        <item>CDMA + LTE/EvDo auto</item>
+        <item>LTE only</item>
     </string-array>
     <string-array name="preferred_network_mode_values">
-        <item>"3"</item>
-        <item>"2"</item>
-        <item>"1"</item>
-        <item>"0"</item>
+        <item>"4"</item>
+        <item>"8"</item>
+        <item>"11"</item>
     </string-array>
     <!-- Mobile network settings screen, data enabling checkbox name -->
     <string name="data_enabled">Data enabled</string>
