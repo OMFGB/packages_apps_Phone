@@ -120,7 +120,7 @@ public class SipCallOptionHandler extends Activity implements
         mNumber = PhoneNumberUtils.getNumberFromIntent(mIntent, this);
         boolean isInCellNetwork = PhoneApp.getInstance().phoneMgr.isRadioOn();
         boolean isRegularCall =
-                "tel".equals(scheme) && !PhoneNumberUtils.isUriNumber(mNumber);
+                ("tel".equals(scheme) || "voicemail".equals(scheme)) && !PhoneNumberUtils.isUriNumber(mNumber);
 
         // Check if VoIP feature is supported.
         if (!voipSupported) {
