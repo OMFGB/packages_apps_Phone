@@ -120,7 +120,7 @@
          pull the phone out of your pocket.)  So devices that *don't* want
          this behavior should set this flag to false via the resource
          overlay.  -->
-    <bool name="allow_back_key_to_reject_incoming_call">false</bool>
+    <bool name="allow_back_key_to_reject_incoming_call">true</bool>
 
     <!-- If true, show an onscreen "Dial" button in the dialer.
          In practice this is used on all platforms even the ones with hard SEND/END
@@ -131,7 +131,7 @@
     <!-- Determine whether calls to mute the microphone in PhoneUtils
          are routed through the android.media.AudioManager class (true) or through
          the com.android.internal.telephony.Phone interface (false). -->
-    <bool name="send_mic_mute_to_AudioManager">true</bool>
+    <bool name="send_mic_mute_to_AudioManager">false</bool>
 
     <!-- Determines if device implements a noise suppression device for in call audio-->
     <bool name="has_in_call_noise_suppression">false</bool>
